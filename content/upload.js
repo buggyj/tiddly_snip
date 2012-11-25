@@ -1,35 +1,94 @@
-function setUploadPassword(aStr)
+function setUploadPassword(aStr,server)
 {
-    var passwordManager = Components.classes["@mozilla.org/passwordmanager;1"].createInstance(Components.interfaces.nsIPasswordManager);
-    try
-        {
-        passwordManager.removeUser("tiddlysniphost", getUploadUser());
+    if ("@mozilla.org/passwordmanager;1" in Components.classes) {
+			// Password Manager exists so this is not Firefox 3 (could beFirefox 2, Netscape, SeaMonkey, etc).
+			// Password Manager code
+	  var passwordManager = Components.classes["@mozilla.org/passwordmanager;1"].createInstance(Components.interfaces.nsIPasswordManager);
+	  try
+		  {
+		  passwordManager.removeUser("tiddlysniphost-"+server, getUploadUser(server));
+		  }
+	  catch(e)
+		  {}
+		passwordManager.addUser("tiddlysniphost-"+server, getUploadUser(server), aStr);
+	}
+	else if ("@mozilla.org/login-manager;1" in Components.classes){
+        // Login Manager exists so this is Firefox 3
+        // Login Manager code
+        var nsLoginInfo = new Components.Constructor("@mozilla.org/login-manager/loginInfo;1",
+                                             Components.interfaces.nsILoginInfo,
+                                             "init");
+
+        var passwordManager = Components.classes["@mozilla.org/login-manager;1"].getService(Components.interfaces.nsILoginManager);
+        var oldLoginInfo = new nsLoginInfo("tiddlysniphost-"+server,null, "TiddlySnip Login",getUploadUser(server), getUploadPassword(server), "", "");
+
+        var newLoginInfo = new nsLoginInfo("tiddlysniphost-"+server,null, "TiddlySnip Login",getUploadUser(server), aStr, "", "");
+
+        try{
+            passwordManager.removeLogin(oldLoginInfo);
         }
-    catch(e)
-        {}
-    passwordManager.addUser("tiddlysniphost", getUploadUser(), aStr);
+        catch(e)
+           {
+
+		   }
+        try{
+            passwordManager.addLogin(newLoginInfo);
+        }
+		catch(e){}
+    }
 }
 
-function getUploadPassword()
+function getUploadPassword(server)
 {
-    var host= new Object();
-    var user= new Object();
-    var pass= new Object();
+	if ("@mozilla.org/passwordmanager;1" in Components.classes) {
+		// Password Manager exists so this is not Firefox 3 (could be Firefox 2, Netscape, SeaMonkey, etc).
+		// Password Manager code
+		var host= new Object();
+		var user= new Object();
+		var pass= new Object();
     try
         {
         var pmInternal = Components.classes["@mozilla.org/passwordmanager;1"].createInstance(Components.interfaces.nsIPasswordManagerInternal);
-        pmInternal.findPasswordEntry("tiddlysniphost",getUploadUser(),"",host,user,pass);
+        pmInternal.findPasswordEntry("tiddlysniphost-"+server,getUploadUser(server),"",host,user,pass);
         return pass.value;
 		}
     catch(e)
         {
 		return "";
 		}
+	}
+	else if ("@mozilla.org/login-manager;1" in Components.classes){
+	// Login Manager exists so this is Firefox 3
+	// Login Manager code
+	var hostname = "tiddlysniphost-"+server;
+	var formSubmitURL = null;
+	var httprealm = "TiddlySnip Login"
+	var username = getUploadUser(server);
+	var password;
+
+	try {
+		// Get Login Manager
+		var pmInternal = Components.classes["@mozilla.org/login-manager;1"].getService(Components.interfaces.nsILoginManager);
+		// Find users for the given parameters
+		var logins = pmInternal.findLogins({}, "tiddlysniphost-"+server,formSubmitURL, httprealm);
+		// Find user from returned array of nsILoginInfo objects
+		for (var i = 0; i < logins.length; i++){
+			if (logins[i].username == username) {
+				password = logins[i].password;
+				break;
+			}
+		}
+		return password;
+	}
+	catch(ex) {
+		// This will only happen if there is no nsILoginManagercomponent class
+		}
+	}		
 }
 
-function getUploadUser()
+function getUploadUser(server)
 {
-    return pref.getCharPref("tiddlysnip.uploadusername");
+    return (server == "mts")? pref.getCharPref("tiddlysnip.mtsusername"):pref.getCharPref("tiddlysnip.uploadusername");
 }
 
 var tiddlySnipUploadObserver =
@@ -73,7 +132,7 @@ function uploadTW(content,title)
 		sheader += "UploadPlugin" +"\"\r\n\r\n";
 		sheader += "backupDir=" + pref.getCharPref("tiddlysnip.uploadbackupdir")
 				  +";user=" + pref.getCharPref("tiddlysnip.uploadusername")
-				  +";password=" + getUploadPassword()
+        +";password=" + getUploadPassword("upload")
 				  +";uploaddir=" + pref.getCharPref("tiddlysnip.uploaddir")
 				  + ";;\r\n";
 		sheader += "\r\n" + "--" + boundary + "\r\n";
@@ -119,6 +178,7 @@ function uploadTW(content,title)
 	    };
     window.setTimeout("doTiddlyUpload()", 1000);
 };
+
 
 
 

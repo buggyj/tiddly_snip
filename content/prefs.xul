@@ -9,7 +9,7 @@
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
     onload="initPrefs();"
     title="&prefwindow.title;"
-    flex="1"
+    flex="2"
     orient="vertical" windowtype="tiddlysnip:preferences"
     persist="screenX screenY"
     >
@@ -19,11 +19,11 @@
             src="chrome://tiddlysnip/locale/tiddlysnip.properties"/>
     </stringbundleset>
 
-    <script type="application/x-javascript" src="prefs.js"/>
-    <script type="application/x-javascript" src="categories.js"/>
-    <script type="application/x-javascript" src="tiddlySnip.js"/>
-    <script type="application/x-javascript" src="upload.js"/>
-    <script type="application/x-javascript" src="tiddler.js"/>
+	<script type="application/x-javascript" src="chrome://tiddlysnip/content/prefs.js"/>
+	<script type="application/x-javascript" src="chrome://tiddlysnip/content/categories.js"/>
+	<script type="application/x-javascript" src="chrome://tiddlysnip/content/tiddlySnip.js"/>
+	<script type="application/x-javascript" src="chrome://tiddlysnip/content/upload.js"/>
+	<script type="application/x-javascript" src="chrome://tiddlysnip/content/tiddler.js"/>
 
     <vbox flex="1">
 	<tabbox>
@@ -60,6 +60,11 @@
 			<groupbox >
 			    <caption label="&miscoptions.label;" />
 			    <vbox flex="0">
+   				<checkbox id="show_includehtml"
+				    label="&inchtml.label;"
+				    type="checkbox"
+				    oncommand="changePref('includehtml',this.checked);"
+				    />
 				<checkbox id="show_includesourceinfo"
 				    label="&incsource.label;"
 				    type="checkbox"
@@ -125,7 +130,23 @@
             </vbox>
         </tabpanel>
         <tabpanel id="uploadpanel">
-            <vbox flex="1">
+        <vbox flex="1">
+            <hbox>
+            			<groupbox>
+			    <caption label="&servertype.label;" />
+			    <radiogroup id="show_servertype">
+				<radio label="&uploadplugin.label;"
+				    oncommand="changePref('servertype',this.value);"
+				    value="0"
+				    />
+				<radio label="&mts.label;"
+				    oncommand="changePref('servertype',this.value);"
+				    value="1"
+				    />
+			    </radiogroup>
+			</groupbox>
+            </hbox>
+            <vbox flex="1" id="uploadpluginoptions">
             <groupbox>
                 <caption label="&uploadoptions.label;" />
                 <vbox>
@@ -162,6 +183,46 @@
                 </vbox>
             </groupbox>
             </vbox>
+            <vbox flex="1" id="mtsoptions">
+            <groupbox>
+            <caption label="&mtsoptions.label;" />
+            <vbox>
+                  <label>&mtsphpfile.label;</label>
+		            <textbox class="padded" flex="5"
+                        id="show_mtsphpfile"
+				        type="autocomplete" autocompletesearch="form-history" onchange="changePref('mtsphpfile',this.value);"
+				        />
+                  <label>&mtshtmlfile.label;</label>
+		            <textbox class="padded" flex="5"
+                        id="show_mtshtmlfile"
+				        type="autocomplete" autocompletesearch="form-history" onchange="changePref('mtshtmlfile',this.value);"
+				        />
+                  <label>&username.label;</label>
+		            <textbox class="padded" flex="5"
+                        id="show_mtsusername"
+				        type="autocomplete" autocompletesearch="form-history" onchange="changePref('mtsusername',this.value);"
+				        />
+                  <label>&password.label;</label>
+		            <textbox class="padded" flex="5"
+                        id="show_mtspass"
+				        type="password" autocompletesearch="form-history"
+				        />
+                    <checkbox id="show_enablemtsbackup"
+                    label="&togglemtsbackup.label;"
+                    type="checkbox"
+                    oncommand="changePref('enablemtsbackup',this.checked);"
+                    />
+
+                    <checkbox id="show_mtslogout"
+                    label="&mtslogout.label;"
+                    type="checkbox"
+                    oncommand="changePref('mtslogout',this.checked);"
+                    />
+
+            </vbox>
+            </groupbox>
+            </vbox>
+            </vbox>
 		</tabpanel>
 		<tabpanel id="viewtwpanel">
 		    <vbox flex="0">
@@ -195,7 +256,7 @@
 		</tabpanel>
 		<tabpanel id="categoriespanel">
 		    <vbox>
-			<html:b><caption label="&snippetcategories.label;" /></html:b>
+			<caption label="&snippetcategories.label;" />
 			<tree id="categoriesTree" flex="1" seltype="single" hidecolumnpicker="true"
 			    rows="7">
 			    <treecols>
@@ -252,4 +313,5 @@
 	<button label="&cancel.label;" onclick="cancelAndExit();"/>
     </vbox>
 </window>
+
 
